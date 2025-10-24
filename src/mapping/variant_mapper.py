@@ -188,9 +188,9 @@ class VariantMapper:
         # 2. Metal Type (second priority) 
         # 3. Ring Size (last priority)
         if len(stone_weights) > 1:
-            attributes['Carat Weight'] = sorted(stone_weights)
+            attributes['Carat Weight'] = self._sort_carat_weights(stone_weights)
         if len(metal_types) > 1:
-            attributes['Metal Type'] = sorted(metal_types)
+            attributes['Metal Type'] = self._sort_metal_types(metal_types)
         if len(ring_sizes) > 1:
             # Sort ring sizes numerically
             sorted_ring_sizes = sorted([float(size) for size in ring_sizes])
@@ -200,6 +200,67 @@ class VariantMapper:
         #     attributes['Stone Size'] = sorted(stone_sizes)
         
         return attributes
+    
+    def _sort_metal_types(self, metal_types: set) -> List[str]:
+        """Sort metal types by custom priority order"""
+        # Define metal type priority order
+        metal_priority = {
+            '14K': 1,
+            'Silver': 2, 
+            'Platinum': 3,
+            '18K': 4
+        }
+        
+        # Define color priority order
+        color_priority = {
+            'White': 1,
+            'Yellow': 2,
+            'Rose': 3,
+            'Gold': 4  # For cases where color is just "Gold"
+        }
+        
+        def get_metal_sort_key(metal_type: str) -> tuple:
+            """Generate sort key for metal type"""
+            metal_type_lower = metal_type.lower()
+            
+            # Extract metal and color
+            if '14k' in metal_type_lower:
+                metal_key = 1
+            elif 'silver' in metal_type_lower:
+                metal_key = 2
+            elif 'platinum' in metal_type_lower or 'pt' in metal_type_lower:
+                metal_key = 3
+            elif '18k' in metal_type_lower:
+                metal_key = 4
+            else:
+                metal_key = 5  # Unknown metals go last
+            
+            # Extract color
+            if 'white' in metal_type_lower:
+                color_key = 1
+            elif 'yellow' in metal_type_lower:
+                color_key = 2
+            elif 'rose' in metal_type_lower:
+                color_key = 3
+            else:
+                color_key = 4  # Other colors go last
+            
+            return (metal_key, color_key, metal_type)
+        
+        return sorted(metal_types, key=get_metal_sort_key)
+    
+    def _sort_carat_weights(self, carat_weights: set) -> List[str]:
+        """Sort carat weights by numeric value"""
+        def get_carat_sort_key(carat_weight: str) -> float:
+            """Extract numeric value from carat weight string"""
+            try:
+                # Extract numeric part before "CTW"
+                numeric_part = carat_weight.replace(' CTW', '').strip()
+                return float(numeric_part)
+            except (ValueError, TypeError):
+                return 0.0  # Invalid values go first
+        
+        return sorted(carat_weights, key=get_carat_sort_key)
     
     def _get_bracelet_options(self, product: NavItem, components: List[NavBomComponent]) -> List[Dict[str, str]]:
         """Get bracelet-specific option values"""

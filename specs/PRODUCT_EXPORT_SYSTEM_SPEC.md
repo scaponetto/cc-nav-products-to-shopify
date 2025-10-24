@@ -1469,6 +1469,22 @@ The system now implements a priority-based ordering for variant attributes:
 - **Earring**: `['Carat Weight:3.00 CTW', 'Metal Type:14K White Gold']`
 - **Ring**: `['Size:5.0']` (only when Carat Weight and Metal Type are identical)
 
+### **Custom Attribute Sorting**
+The system implements intelligent sorting for variant attributes:
+
+#### **Carat Weight Sorting**
+- **Numeric Order**: Sorted by actual carat value (smallest to largest)
+- **Example**: `['0.50 CTW', '1.00 CTW', '1.50 CTW', '2.00 CTW', '3.00 CTW', '4.00 CTW']`
+
+#### **Metal Type Sorting**
+- **Priority Order**: 14K Gold → Silver → Platinum → 18K Gold
+- **Color Order**: White → Yellow → Rose (within each metal type)
+- **Example**: `['14K White Gold', '14K Yellow Gold', '14K Rose Gold', 'Platinum', '18K White Gold', '18K Yellow Gold', '18K Rose Gold']`
+
+#### **Ring Size Sorting**
+- **Numeric Order**: Sorted by actual size value (smallest to largest)
+- **Example**: `['4.0', '4.5', '5.0', '5.5', '6.0', '6.5', '7.0', '7.5', '8.0', '8.5', '9.0']`
+
 ### **Product Title Optimization**
 - **Exclusion Logic**: Variant attributes are automatically excluded from product titles
 - **Clean Titles**: Product titles focus on core product characteristics
