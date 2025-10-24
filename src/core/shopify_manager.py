@@ -156,8 +156,8 @@ class ShopifyManager:
     def _publish_to_online_store(self, product_id: str) -> Dict[str, Any]:
         """Publish product to Online Store sales channel"""
         mutation = """
-        mutation publishablePublishToCurrentChannel($id: ID!) {
-            publishablePublishToCurrentChannel(id: $id) {
+        mutation publishablePublish($id: ID!, $input: [PublicationInput!]!) {
+            publishablePublish(id: $id, input: $input) {
                 publishable {
                     availablePublicationsCount {
                         count
@@ -172,7 +172,10 @@ class ShopifyManager:
         """
         
         variables = {
-            "id": product_id
+            "id": product_id,
+            "input": [{
+                "publicationId": "gid://shopify/Publication/80554164402"
+            }]
         }
         
         try:
@@ -196,7 +199,7 @@ class ShopifyManager:
             if result.get('errors'):
                 raise Exception(f"GraphQL errors: {result['errors']}")
             
-            return result['data']['publishablePublishToCurrentChannel']
+            return result['data']['publishablePublish']
             
         except Exception as e:
             self.logger.error(f"Failed to publish product to Online Store: {e}")
