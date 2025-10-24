@@ -30,10 +30,21 @@ class ShopifyManager:
         mutation = self._prepare_product_set_mutation(product_data)
         
         # Execute with retry logic
-        return self.error_handler.execute_with_retry(
+        result = self.error_handler.execute_with_retry(
             self._execute_graphql_mutation,
             mutation
         )
+        
+        # If product was created successfully, publish to Online Store
+        if result.get('product') and not result.get('userErrors'):
+            product_id = result['product']['id']
+            publish_result = self._publish_to_online_store(product_id)
+            if publish_result.get('userErrors'):
+                self.logger.warning(f"Failed to publish product to Online Store: {publish_result['userErrors']}")
+            else:
+                self.logger.info(f"Successfully published product {product_id} to Online Store")
+        
+        return result
     
     def _prepare_product_set_mutation(self, product_data: Dict[str, Any]) -> Dict[str, Any]:
         """Prepare productSet mutation for atomic product creation"""
@@ -141,3 +152,52 @@ class ShopifyManager:
             raise Exception(f"GraphQL errors: {result['errors']}")
         
         return result['data']['productSet']
+    
+    def _publish_to_online_store(self, product_id: str) -> Dict[str, Any]:
+        """Publish product to Online Store sales channel"""
+        mutation = """
+        mutation publishablePublishToCurrentChannel($id: ID!) {
+            publishablePublishToCurrentChannel(id: $id) {
+                publishable {
+                    availablePublicationsCount {
+                        count
+                    }
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+        """
+        
+        variables = {
+            "id": product_id
+        }
+        
+        try:
+            response = requests.post(
+                self.base_url,
+                headers=self.headers,
+                json={
+                    "query": mutation,
+                    "variables": variables
+                },
+                timeout=self.config.shopify.timeout
+            )
+            
+            if response.status_code == 429:
+                retry_after = int(response.headers.get('Retry-After', 2))
+                raise RateLimitError(f"Rate limited. Retry after {retry_after} seconds", retry_after)
+            
+            response.raise_for_status()
+            result = response.json()
+            
+            if result.get('errors'):
+                raise Exception(f"GraphQL errors: {result['errors']}")
+            
+            return result['data']['publishablePublishToCurrentChannel']
+            
+        except Exception as e:
+            self.logger.error(f"Failed to publish product to Online Store: {e}")
+            return {"userErrors": [{"field": "publish", "message": str(e)}]}
