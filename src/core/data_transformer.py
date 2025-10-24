@@ -37,13 +37,25 @@ class DataTransformer:
             products[0], components_by_product.get(products[0]['No_'], [])
         )
         
-        # Add variants for all products in group
+        # Add variants for all products in group, filtering duplicates
         shopify_product['variants'] = []
+        seen_combinations = set()
+        
         for product in products:
             variant = self.variant_mapper.map_variant(
                 product, components_by_product.get(product['No_'], [])
             )
-            shopify_product['variants'].append(variant)
+            
+            # Create a unique key for this variant combination
+            option_values = variant.get('optionValues', [])
+            combination_key = tuple(sorted([f'{opt["optionName"]}:{opt["name"]}' for opt in option_values]))
+            
+            # Only add if we haven't seen this combination before
+            if combination_key not in seen_combinations:
+                shopify_product['variants'].append(variant)
+                seen_combinations.add(combination_key)
+            else:
+                self.logger.warning(f"Skipping duplicate variant for product {product['No_']}: {combination_key}")
         
         # Add metafields
         shopify_product['metafields'] = self.metadata_mapper.map_metafields(

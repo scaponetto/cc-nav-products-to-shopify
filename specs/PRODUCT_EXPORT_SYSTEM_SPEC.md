@@ -1382,4 +1382,51 @@ results = processor.process_all_group_ids()
 
 ---
 
+## 🔧 **Variant Mapping Implementation**
+
+### **Intelligent Variant Generation**
+The system now implements smart variant mapping that creates unique product variants based on actual database differences:
+
+#### **Ring Products (Item_Category_Code: RING)**
+- **Size Option**: Reads actual `Ring_Size` field from database
+  - Example: Size 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0
+  - Format: Decimal with one decimal place (e.g., "5.0", "7.5")
+- **Metal Option**: Combines `Metal_Stamp` and `Metal_Color` fields
+  - Example: "14K Yellow Gold", "18K White Gold", "Platinum"
+- **Stone Weight Option**: Uses `Stone_Weight__Carats_` field
+  - Example: "0.30 CTW", "1.50 CTW", "2.00 CTW"
+
+#### **Earring Products (Item_Category_Code: EARRING)**
+- **Metal Option**: Primary metal type from database
+- **Stone Weight Option**: Total carat weight from `Stone_Weight__Carats_`
+- **Stone Length Option**: Uses `Primary_Gem_Diameter_Length_MM` field
+  - Example: "5.0mm", "6.5mm", "8.0mm"
+
+#### **Necklace/Bracelet Products**
+- **Metal Option**: Primary metal type
+- **Stone Weight Option**: Total carat weight
+- **Plating Option**: Standard plating type (placeholder for future enhancement)
+
+#### **Gemstone Products (Item_Category_Code: GEMSTONE)**
+- **Stone Weight Option**: Individual stone weight
+- **Stone Length Option**: Stone dimensions from `Primary_Gem_Diameter_Length_MM`
+- **Stone Width Option**: Stone width from `Primary_Gem_Width_MM`
+
+### **Variant Uniqueness**
+- **Unique Combinations**: Each variant represents a unique combination of option values
+- **No Duplicates**: System prevents duplicate variants with identical option combinations
+- **Shopify Compliance**: All variants meet Shopify's product variant requirements
+
+### **Example: Ring Product (LGD-101792)**
+```
+Product: 0.30 CTW Round Lab-Grown Diamond Accented Ring in 14K Yellow Gold
+Variants: 11 unique combinations
+- Size 4.0 + 14K Yellow Gold + 0.30 CTW
+- Size 4.5 + 14K Yellow Gold + 0.30 CTW
+- Size 5.0 + 14K Yellow Gold + 0.30 CTW
+- ... (continues for all 11 sizes)
+```
+
+---
+
 This specification provides a comprehensive blueprint for implementing the product export system. The modular architecture ensures maintainability, while the atomic operations approach prevents the product locking issues encountered in previous implementations. The system is designed to be efficient, scalable, and robust, with comprehensive error handling and monitoring capabilities.

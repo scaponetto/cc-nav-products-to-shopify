@@ -60,8 +60,15 @@ class VariantMapper:
         """Get ring-specific option values"""
         options = []
         
-        # Option 1: Ring Size (placeholder - would need size data)
-        options.append({"optionName": "Size", "name": "7"})
+        # Option 1: Ring Size (from database)
+        if product.get('Ring_Size'):
+            try:
+                ring_size = float(product['Ring_Size'])
+                options.append({"optionName": "Size", "name": f"{ring_size:.1f}"})
+            except (ValueError, TypeError):
+                options.append({"optionName": "Size", "name": str(product['Ring_Size'])})
+        else:
+            options.append({"optionName": "Size", "name": "7.0"})  # Default fallback
         
         # Option 2: Metal Type
         if product.get('Metal_Stamp') and product.get('Metal_Color'):
@@ -121,8 +128,22 @@ class VariantMapper:
             except (ValueError, TypeError):
                 pass
         
-        # Option 3: Plating Type (placeholder)
-        options.append({"optionName": "Plating", "name": "Standard"})
+        # Option 3: Stone Size (using length and width)
+        length = product.get('Primary_Gem_Diameter_Length_MM')
+        width = product.get('Primary_Gem_Width_MM')
+        if length and width:
+            try:
+                length_val = float(length)
+                width_val = float(width)
+                if length_val == width_val:
+                    options.append({"optionName": "Stone Size", "name": f"{length_val:.1f}mm"})
+                else:
+                    options.append({"optionName": "Stone Size", "name": f"{length_val:.1f}x{width_val:.1f}mm"})
+            except (ValueError, TypeError):
+                pass
+        
+        # Note: SKU is used as the variant identifier, not as a product option
+        # Shopify limits product options to 3 maximum
         
         return options
     
