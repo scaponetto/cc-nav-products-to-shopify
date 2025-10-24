@@ -27,10 +27,7 @@ class VariantMapper:
         return {
             'optionValues': option_values,
             'sku': sku,
-            'price': 0.0,  # Placeholder - would need pricing logic
-            'inventoryQuantity': 0,  # Placeholder - would need inventory logic
-            'weight': weight,
-            'weightUnit': 'kg'
+            'price': '0.00'  # Placeholder - would need pricing logic
         }
     
     def _generate_option_values(self, product: NavItem, components: List[NavBomComponent]) -> List[Dict[str, str]]:
@@ -201,7 +198,7 @@ class VariantMapper:
     
     def _generate_sku(self, product: NavItem) -> str:
         """Generate SKU from product data"""
-        return product.get('No_')
+        return str(product.get('No_'))
     
     def _calculate_weight(self, product: NavItem, components: List[NavBomComponent]) -> float:
         """Calculate product weight (placeholder logic)"""

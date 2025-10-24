@@ -76,8 +76,42 @@ class ShopifyManager:
         }
         """
         
+        # Extract product options from variants
+        product_options = []
+        if product_data.get('variants'):
+            # Get unique option names and their values from variants
+            option_data = {}
+            for variant in product_data['variants']:
+                if variant.get('optionValues'):
+                    for option in variant['optionValues']:
+                        option_name = option['optionName']
+                        option_value = option['name']
+                        if option_name not in option_data:
+                            option_data[option_name] = set()
+                        option_data[option_name].add(option_value)
+            
+            # Create product options with values
+            for i, (option_name, values) in enumerate(option_data.items(), 1):
+                # Convert values to objects with just name
+                value_objects = []
+                for value in values:
+                    value_objects.append({
+                        'name': value
+                    })
+                
+                product_options.append({
+                    'name': option_name,
+                    'position': i,
+                    'values': value_objects
+                })
+        
+        # Add product options to the input
+        product_data_with_options = product_data.copy()
+        if product_options:
+            product_data_with_options['productOptions'] = product_options
+        
         variables = {
-            "input": product_data,
+            "input": product_data_with_options,
             "synchronous": True
         }
         
