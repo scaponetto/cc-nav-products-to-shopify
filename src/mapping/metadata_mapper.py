@@ -29,17 +29,17 @@ class MetadataMapper:
         metafields = []
         
         # Setting style
-        if product.Product_Subgroup_Code:
+        if product.get('Product_Subgroup_Code'):
             metafields.append({
                 'namespace': 'custom.product_attributes',
                 'key': 'setting_style',
                 'type': 'single_line_text_field',
-                'value': product.Product_Subgroup_Code
+                'value': product['Product_Subgroup_Code']
             })
         
         # Stone material
-        if product.Primary_Gem_Material_Type:
-            material = self._map_material_type(product.Primary_Gem_Material_Type)
+        if product.get('Primary_Gem_Material_Type'):
+            material = self._map_material_type(product['Primary_Gem_Material_Type'])
             metafields.append({
                 'namespace': 'custom.product_attributes',
                 'key': 'stone_material',
@@ -48,100 +48,100 @@ class MetadataMapper:
             })
         
         # Stone shape
-        if product.Primary_Gem_Shape:
+        if product.get('Primary_Gem_Shape'):
             metafields.append({
                 'namespace': 'custom.product_attributes',
                 'key': 'stone_shape',
                 'type': 'single_line_text_field',
-                'value': product.Primary_Gem_Shape
+                'value': product['Primary_Gem_Shape']
             })
         
         # Stone color
-        if product.Primary_Gem_Color:
+        if product.get('Primary_Gem_Color'):
             metafields.append({
                 'namespace': 'custom.product_attributes',
                 'key': 'stone_color',
                 'type': 'single_line_text_field',
-                'value': product.Primary_Gem_Color
+                'value': product['Primary_Gem_Color']
             })
         
         # Main setting type
-        if product.Main_Setting_Type:
+        if product.get('Main_Setting_Type'):
             metafields.append({
                 'namespace': 'custom.product_attributes',
                 'key': 'main_setting_type',
                 'type': 'single_line_text_field',
-                'value': product.Main_Setting_Type
+                'value': product['Main_Setting_Type']
             })
         
         # Collection
-        if product.Collection:
+        if product.get('Collection'):
             metafields.append({
                 'namespace': 'custom.product_attributes',
                 'key': 'collection',
                 'type': 'single_line_text_field',
-                'value': product.Collection
+                'value': product['Collection']
             })
         
         # Jewelry brand
-        if product.Jewelry_Brand:
+        if product.get('Jewelry_Brand'):
             metafields.append({
                 'namespace': 'custom.product_attributes',
                 'key': 'jewelry_brand',
                 'type': 'single_line_text_field',
-                'value': product.Jewelry_Brand
+                'value': product['Jewelry_Brand']
             })
         
         # Gemstone brand
-        if product.Gemstone_Brand:
+        if product.get('Gemstone_Brand'):
             metafields.append({
                 'namespace': 'custom.product_attributes',
                 'key': 'gemstone_brand',
                 'type': 'single_line_text_field',
-                'value': product.Gemstone_Brand
+                'value': product['Gemstone_Brand']
             })
         
         # Style ID
-        if product.Style_ID:
+        if product.get('Style_ID'):
             metafields.append({
                 'namespace': 'custom.product_attributes',
                 'key': 'style_id',
                 'type': 'single_line_text_field',
-                'value': product.Style_ID
+                'value': product['Style_ID']
             })
         
         # Web descriptor
-        if product.Web_Descriptor:
+        if product.get('Web_Descriptor'):
             metafields.append({
                 'namespace': 'custom.product_attributes',
                 'key': 'web_descriptor',
                 'type': 'single_line_text_field',
-                'value': product.Web_Descriptor
+                'value': product['Web_Descriptor']
             })
         
         # Boolean flags
-        if product.Is_Best_Seller is not None:
+        if product.get('Is_Best_Seller') is not None:
             metafields.append({
                 'namespace': 'custom.product_attributes',
                 'key': 'is_best_seller',
                 'type': 'boolean',
-                'value': str(product.Is_Best_Seller).lower()
+                'value': str(product['Is_Best_Seller']).lower()
             })
         
-        if product.Is_High_ROAS is not None:
+        if product.get('Is_High_ROAS') is not None:
             metafields.append({
                 'namespace': 'custom.product_attributes',
                 'key': 'is_high_roas',
                 'type': 'boolean',
-                'value': str(product.Is_High_ROAS).lower()
+                'value': str(product['Is_High_ROAS']).lower()
             })
         
-        if product.Is_Pinterest is not None:
+        if product.get('Is_Pinterest') is not None:
             metafields.append({
                 'namespace': 'custom.product_attributes',
                 'key': 'is_pinterest',
                 'type': 'boolean',
-                'value': str(product.Is_Pinterest).lower()
+                'value': str(product['Is_Pinterest']).lower()
             })
         
         return metafields
@@ -151,46 +151,46 @@ class MetadataMapper:
         metafields = []
         
         # Group components by type
-        stone_components = [c for c in components if c.Metal_Type == '0']
-        metal_components = [c for c in components if c.Metal_Type == '1']
+        stone_components = [c for c in components if c.get('Metal_Type') == '0']
+        metal_components = [c for c in components if c.get('Metal_Type') == '1']
         
         # Stone component metafields
         if stone_components:
             main_stone = stone_components[0]  # First stone is typically the main stone
             
             # Stone dimensions
-            if main_stone.Primary_Gem_Diameter_Length_MM:
+            if main_stone.get('Primary_Gem_Diameter_Length_MM'):
                 metafields.append({
                     'namespace': 'custom.variant_attributes',
                     'key': 'stone_dimensions_length',
                     'type': 'number_decimal',
-                    'value': str(main_stone.Primary_Gem_Diameter_Length_MM)
+                    'value': str(main_stone['Primary_Gem_Diameter_Length_MM'])
                 })
             
-            if main_stone.Primary_Gem_Width_MM:
+            if main_stone.get('Primary_Gem_Width_MM'):
                 metafields.append({
                     'namespace': 'custom.variant_attributes',
                     'key': 'stone_dimensions_width',
                     'type': 'number_decimal',
-                    'value': str(main_stone.Primary_Gem_Width_MM)
+                    'value': str(main_stone['Primary_Gem_Width_MM'])
                 })
             
             # Clarity grade
-            if main_stone.Primary_Gem_Grade_Clarity:
+            if main_stone.get('Primary_Gem_Grade_Clarity'):
                 metafields.append({
                     'namespace': 'custom.variant_attributes',
                     'key': 'clarity_grade',
                     'type': 'single_line_text_field',
-                    'value': main_stone.Primary_Gem_Grade_Clarity
+                    'value': main_stone['Primary_Gem_Grade_Clarity']
                 })
             
             # Stone count
-            if main_stone.Pieces_Per:
+            if main_stone.get('Pieces_Per'):
                 metafields.append({
                     'namespace': 'custom.variant_attributes',
                     'key': 'stone_count',
                     'type': 'number_integer',
-                    'value': str(main_stone.Pieces_Per)
+                    'value': str(main_stone['Pieces_Per'])
                 })
         
         return metafields

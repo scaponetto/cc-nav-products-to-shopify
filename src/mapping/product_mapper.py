@@ -41,10 +41,10 @@ class ProductMapper:
         title = self._generate_product_title(product, components)
         
         # Generate handle
-        handle = self._generate_handle(title, product.Web_Product_Group_ID)
+        handle = self._generate_handle(title, product.get('Web_Product_Group_ID'))
         
         # Map product type
-        product_type = self.product_type_map.get(product.Item_Category_Code, product.Item_Category_Code)
+        product_type = self.product_type_map.get(product.get('Item_Category_Code'), product.get('Item_Category_Code'))
         
         return {
             'title': title,
@@ -60,32 +60,38 @@ class ProductMapper:
         title_parts = []
         
         # Total carat weight
-        if product.Stone_Weight__Carats_ and product.Stone_Weight__Carats_ > 0:
-            if product.Primary_Gem_Material_Type == 'MOISSANITE':
-                title_parts.append(f"{product.Stone_Weight__Carats_:.2f} CTW DEW")
-            else:
-                title_parts.append(f"{product.Stone_Weight__Carats_:.2f} CTW")
+        stone_weight = product.get('Stone_Weight__Carats_')
+        if stone_weight:
+            try:
+                stone_weight = float(stone_weight)
+                if stone_weight > 0:
+                    if product.get('Primary_Gem_Material_Type') == 'MOISSANITE':
+                        title_parts.append(f"{stone_weight:.2f} CTW DEW")
+                    else:
+                        title_parts.append(f"{stone_weight:.2f} CTW")
+            except (ValueError, TypeError):
+                pass
         
         # Primary gem shape
-        if product.Primary_Gem_Shape:
-            title_parts.append(product.Primary_Gem_Shape.title())
+        if product.get('Primary_Gem_Shape'):
+            title_parts.append(product['Primary_Gem_Shape'].title())
         
         # Primary stone type
-        if product.Primary_Gem_Material_Type:
-            material = self.material_type_map.get(product.Primary_Gem_Material_Type, product.Primary_Gem_Material_Type)
+        if product.get('Primary_Gem_Material_Type'):
+            material = self.material_type_map.get(product['Primary_Gem_Material_Type'], product['Primary_Gem_Material_Type'])
             title_parts.append(material)
         
         # Product group (setting style)
-        if product.Product_Subgroup_Code:
-            title_parts.append(product.Product_Subgroup_Code.title())
+        if product.get('Product_Subgroup_Code'):
+            title_parts.append(product['Product_Subgroup_Code'].title())
         
         # Item category
-        if product.Item_Category_Code:
-            title_parts.append(product.Item_Category_Code.title())
+        if product.get('Item_Category_Code'):
+            title_parts.append(product['Item_Category_Code'].title())
         
         # Metal type
-        if product.Metal_Stamp and product.Metal_Color:
-            metal_type = self._format_metal_type(product.Metal_Stamp, product.Metal_Color, product.Metal_Code)
+        if product.get('Metal_Stamp') and product.get('Metal_Color'):
+            metal_type = self._format_metal_type(product['Metal_Stamp'], product['Metal_Color'], product.get('Metal_Code'))
             title_parts.append(f"in {metal_type}")
         
         return " ".join(title_parts)
@@ -121,18 +127,24 @@ class ProductMapper:
         description_parts = []
         
         # Basic product info
-        if product.Primary_Gem_Material_Type:
-            material = self.material_type_map.get(product.Primary_Gem_Material_Type, product.Primary_Gem_Material_Type)
+        if product.get('Primary_Gem_Material_Type'):
+            material = self.material_type_map.get(product['Primary_Gem_Material_Type'], product['Primary_Gem_Material_Type'])
             description_parts.append(f"Beautiful {material} jewelry")
         
         # Metal type
-        if product.Metal_Stamp and product.Metal_Color:
-            metal_type = self._format_metal_type(product.Metal_Stamp, product.Metal_Color, product.Metal_Code)
+        if product.get('Metal_Stamp') and product.get('Metal_Color'):
+            metal_type = self._format_metal_type(product['Metal_Stamp'], product['Metal_Color'], product.get('Metal_Code'))
             description_parts.append(f"crafted in {metal_type}")
         
         # Carat weight
-        if product.Stone_Weight__Carats_ and product.Stone_Weight__Carats_ > 0:
-            description_parts.append(f"with {product.Stone_Weight__Carats_:.2f} total carat weight")
+        stone_weight = product.get('Stone_Weight__Carats_')
+        if stone_weight:
+            try:
+                stone_weight = float(stone_weight)
+                if stone_weight > 0:
+                    description_parts.append(f"with {stone_weight:.2f} total carat weight")
+            except (ValueError, TypeError):
+                pass
         
         return ". ".join(description_parts) + "."
     

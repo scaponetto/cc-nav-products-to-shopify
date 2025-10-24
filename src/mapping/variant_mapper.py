@@ -38,19 +38,19 @@ class VariantMapper:
         option_values = []
         
         # Determine primary variations based on product type
-        if product.Item_Category_Code == 'RING':
+        if product.get('Item_Category_Code') == 'RING':
             # Rings: Size, Metal Type, Stone Weight
             option_values = self._get_ring_options(product, components)
-        elif product.Item_Category_Code == 'EARRING':
+        elif product.get('Item_Category_Code') == 'EARRING':
             # Earrings: Metal Type, Stone Weight, Stone Length
             option_values = self._get_earring_options(product, components)
-        elif product.Item_Category_Code == 'NECKLACE':
+        elif product.get('Item_Category_Code') == 'NECKLACE':
             # Necklaces: Metal Type, Stone Weight, Plating Type
             option_values = self._get_necklace_options(product, components)
-        elif product.Item_Category_Code == 'BRACELET':
+        elif product.get('Item_Category_Code') == 'BRACELET':
             # Bracelets: Metal Type, Stone Weight, Plating Type
             option_values = self._get_bracelet_options(product, components)
-        elif product.Item_Category_Code == 'GEMSTONE':
+        elif product.get('Item_Category_Code') == 'GEMSTONE':
             # Gemstones: Stone Weight, Stone Length, Stone Width
             option_values = self._get_gemstone_options(product, components)
         else:
@@ -67,13 +67,18 @@ class VariantMapper:
         options.append({"optionName": "Size", "name": "7"})
         
         # Option 2: Metal Type
-        if product.Metal_Stamp and product.Metal_Color:
-            metal_type = self._format_metal_type(product.Metal_Stamp, product.Metal_Color, product.Metal_Code)
+        if product.get('Metal_Stamp') and product.get('Metal_Color'):
+            metal_type = self._format_metal_type(product['Metal_Stamp'], product['Metal_Color'], product.get('Metal_Code'))
             options.append({"optionName": "Metal", "name": metal_type})
         
         # Option 3: Stone Weight
-        if product.Stone_Weight__Carats_:
-            options.append({"optionName": "Stone Weight", "name": f"{product.Stone_Weight__Carats_:.2f} CTW"})
+        stone_weight = product.get('Stone_Weight__Carats_')
+        if stone_weight:
+            try:
+                stone_weight = float(stone_weight)
+                options.append({"optionName": "Stone Weight", "name": f"{stone_weight:.2f} CTW"})
+            except (ValueError, TypeError):
+                pass
         
         return options
     
@@ -82,17 +87,22 @@ class VariantMapper:
         options = []
         
         # Option 1: Metal Type
-        if product.Metal_Stamp and product.Metal_Color:
-            metal_type = self._format_metal_type(product.Metal_Stamp, product.Metal_Color, product.Metal_Code)
+        if product.get('Metal_Stamp') and product.get('Metal_Color'):
+            metal_type = self._format_metal_type(product['Metal_Stamp'], product['Metal_Color'], product.get('Metal_Code'))
             options.append({"optionName": "Metal", "name": metal_type})
         
         # Option 2: Stone Weight
-        if product.Stone_Weight__Carats_:
-            options.append({"optionName": "Stone Weight", "name": f"{product.Stone_Weight__Carats_:.2f} CTW"})
+        stone_weight = product.get('Stone_Weight__Carats_')
+        if stone_weight:
+            try:
+                stone_weight = float(stone_weight)
+                options.append({"optionName": "Stone Weight", "name": f"{stone_weight:.2f} CTW"})
+            except (ValueError, TypeError):
+                pass
         
         # Option 3: Stone Length
-        if product.Primary_Gem_Diameter_Length_MM:
-            options.append({"optionName": "Stone Length", "name": f"{product.Primary_Gem_Diameter_Length_MM}mm"})
+        if product.get('Primary_Gem_Diameter_Length_MM'):
+            options.append({"optionName": "Stone Length", "name": f"{product['Primary_Gem_Diameter_Length_MM']}mm"})
         
         return options
     
@@ -101,13 +111,18 @@ class VariantMapper:
         options = []
         
         # Option 1: Metal Type
-        if product.Metal_Stamp and product.Metal_Color:
-            metal_type = self._format_metal_type(product.Metal_Stamp, product.Metal_Color, product.Metal_Code)
+        if product.get('Metal_Stamp') and product.get('Metal_Color'):
+            metal_type = self._format_metal_type(product['Metal_Stamp'], product['Metal_Color'], product.get('Metal_Code'))
             options.append({"optionName": "Metal", "name": metal_type})
         
         # Option 2: Stone Weight
-        if product.Stone_Weight__Carats_:
-            options.append({"optionName": "Stone Weight", "name": f"{product.Stone_Weight__Carats_:.2f} CTW"})
+        stone_weight = product.get('Stone_Weight__Carats_')
+        if stone_weight:
+            try:
+                stone_weight = float(stone_weight)
+                options.append({"optionName": "Stone Weight", "name": f"{stone_weight:.2f} CTW"})
+            except (ValueError, TypeError):
+                pass
         
         # Option 3: Plating Type (placeholder)
         options.append({"optionName": "Plating", "name": "Standard"})
@@ -119,13 +134,18 @@ class VariantMapper:
         options = []
         
         # Option 1: Metal Type
-        if product.Metal_Stamp and product.Metal_Color:
-            metal_type = self._format_metal_type(product.Metal_Stamp, product.Metal_Color, product.Metal_Code)
+        if product.get('Metal_Stamp') and product.get('Metal_Color'):
+            metal_type = self._format_metal_type(product['Metal_Stamp'], product['Metal_Color'], product.get('Metal_Code'))
             options.append({"optionName": "Metal", "name": metal_type})
         
         # Option 2: Stone Weight
-        if product.Stone_Weight__Carats_:
-            options.append({"optionName": "Stone Weight", "name": f"{product.Stone_Weight__Carats_:.2f} CTW"})
+        stone_weight = product.get('Stone_Weight__Carats_')
+        if stone_weight:
+            try:
+                stone_weight = float(stone_weight)
+                options.append({"optionName": "Stone Weight", "name": f"{stone_weight:.2f} CTW"})
+            except (ValueError, TypeError):
+                pass
         
         # Option 3: Plating Type (placeholder)
         options.append({"optionName": "Plating", "name": "Standard"})
@@ -137,16 +157,21 @@ class VariantMapper:
         options = []
         
         # Option 1: Stone Weight
-        if product.Stone_Weight__Carats_:
-            options.append({"optionName": "Stone Weight", "name": f"{product.Stone_Weight__Carats_:.2f} CTW"})
+        stone_weight = product.get('Stone_Weight__Carats_')
+        if stone_weight:
+            try:
+                stone_weight = float(stone_weight)
+                options.append({"optionName": "Stone Weight", "name": f"{stone_weight:.2f} CTW"})
+            except (ValueError, TypeError):
+                pass
         
         # Option 2: Stone Length
-        if product.Primary_Gem_Diameter_Length_MM:
-            options.append({"optionName": "Stone Length", "name": f"{product.Primary_Gem_Diameter_Length_MM}mm"})
+        if product.get('Primary_Gem_Diameter_Length_MM'):
+            options.append({"optionName": "Stone Length", "name": f"{product['Primary_Gem_Diameter_Length_MM']}mm"})
         
         # Option 3: Stone Width
-        if product.Primary_Gem_Width_MM:
-            options.append({"optionName": "Stone Width", "name": f"{product.Primary_Gem_Width_MM}mm"})
+        if product.get('Primary_Gem_Width_MM'):
+            options.append({"optionName": "Stone Width", "name": f"{product['Primary_Gem_Width_MM']}mm"})
         
         return options
     
@@ -155,23 +180,28 @@ class VariantMapper:
         options = []
         
         # Option 1: Metal Type
-        if product.Metal_Stamp and product.Metal_Color:
-            metal_type = self._format_metal_type(product.Metal_Stamp, product.Metal_Color, product.Metal_Code)
+        if product.get('Metal_Stamp') and product.get('Metal_Color'):
+            metal_type = self._format_metal_type(product['Metal_Stamp'], product['Metal_Color'], product.get('Metal_Code'))
             options.append({"optionName": "Metal", "name": metal_type})
         
         # Option 2: Stone Weight
-        if product.Stone_Weight__Carats_:
-            options.append({"optionName": "Stone Weight", "name": f"{product.Stone_Weight__Carats_:.2f} CTW"})
+        stone_weight = product.get('Stone_Weight__Carats_')
+        if stone_weight:
+            try:
+                stone_weight = float(stone_weight)
+                options.append({"optionName": "Stone Weight", "name": f"{stone_weight:.2f} CTW"})
+            except (ValueError, TypeError):
+                pass
         
         # Option 3: Stone Shape
-        if product.Primary_Gem_Shape:
-            options.append({"optionName": "Stone Shape", "name": product.Primary_Gem_Shape.title()})
+        if product.get('Primary_Gem_Shape'):
+            options.append({"optionName": "Stone Shape", "name": product['Primary_Gem_Shape'].title()})
         
         return options
     
     def _generate_sku(self, product: NavItem) -> str:
         """Generate SKU from product data"""
-        return product.No_
+        return product.get('No_')
     
     def _calculate_weight(self, product: NavItem, components: List[NavBomComponent]) -> float:
         """Calculate product weight (placeholder logic)"""

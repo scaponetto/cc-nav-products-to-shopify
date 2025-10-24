@@ -65,15 +65,18 @@ class DatabaseManager:
         
         # Get component data for all products in group
         product_nos = [product['No_'] for product in products]
-        placeholders = ','.join(['%s'] * len(product_nos))
+        components = []
         
-        component_query = f"""
-        SELECT * FROM nav_bom_components 
-        WHERE Parent_Item_No_ IN ({placeholders})
-        ORDER BY Parent_Item_No_, RANK
-        """
-        
-        components = self._execute_query(component_query, product_nos, fetch_all=True)
+        if product_nos:  # Only query components if there are products
+            placeholders = ','.join(['%s'] * len(product_nos))
+            
+            component_query = f"""
+            SELECT * FROM nav_bom_components 
+            WHERE Parent_Item_No_ IN ({placeholders})
+            ORDER BY Parent_Item_No_, `RANK`
+            """
+            
+            components = self._execute_query(component_query, tuple(product_nos), fetch_all=True)
         
         return {
             'group_id': group_id,
@@ -88,7 +91,12 @@ class DatabaseManager:
         
         try:
             cursor = self.connection.cursor(dictionary=True)
-            cursor.execute(query, params)
+            self.logger.debug(f"Executing query: {query}")
+            self.logger.debug(f"With params: {params}")
+            if params:
+                cursor.execute(query, params)
+            else:
+                cursor.execute(query)
             
             if fetch_all:
                 return cursor.fetchall()
