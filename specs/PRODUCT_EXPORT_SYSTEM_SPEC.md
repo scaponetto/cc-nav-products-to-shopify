@@ -1457,6 +1457,18 @@ The system now implements intelligent variant attribute detection that only incl
 - **Carat Weight**: Renamed from "Stone Weight" to "Carat Weight" for industry standard
 - **Stone Size**: Moved from variant attribute to metadata field for product details
 
+### **Variant Attribute Ordering**
+The system now implements a priority-based ordering for variant attributes:
+
+1. **Carat Weight** (First Priority): Most important differentiating factor
+2. **Metal Type** (Second Priority): Material selection
+3. **Ring Size** (Last Priority): Physical sizing for rings
+
+#### **Ordering Examples**:
+- **Necklace**: `['Carat Weight:1.50 CTW', 'Metal Type:14K Yellow Gold']`
+- **Earring**: `['Carat Weight:3.00 CTW', 'Metal Type:14K White Gold']`
+- **Ring**: `['Size:5.0']` (only when Carat Weight and Metal Type are identical)
+
 ### **Product Title Optimization**
 - **Exclusion Logic**: Variant attributes are automatically excluded from product titles
 - **Clean Titles**: Product titles focus on core product characteristics

@@ -75,69 +75,63 @@ class DataTransformer:
         return shopify_product
     
     def _apply_dynamic_attributes(self, variant: Dict[str, Any], product: NavItem, dynamic_attributes: Dict[str, List[str]]) -> Dict[str, Any]:
-        """Apply dynamic attributes to variant based on product data"""
+        """Apply dynamic attributes to variant based on product data in priority order"""
         option_values = []
         
-        for attr_name, attr_values in dynamic_attributes.items():
-            if attr_name == 'Size' and product.get('Ring_Size'):
-                # Ring size
-                try:
-                    ring_size = float(product['Ring_Size'])
-                    option_values.append({"optionName": attr_name, "name": f"{ring_size:.1f}"})
-                except (ValueError, TypeError):
-                    option_values.append({"optionName": attr_name, "name": str(product['Ring_Size'])})
-            
-            elif attr_name == 'Metal Type' and product.get('Metal_Stamp') and product.get('Metal_Color'):
-                # Metal type
-                metal_type = self.variant_mapper._format_metal_type(
-                    product['Metal_Stamp'], product['Metal_Color'], product.get('Metal_Code')
-                )
-                option_values.append({"optionName": attr_name, "name": metal_type})
-            
-            elif attr_name == 'Carat Weight' and product.get('Stone_Weight__Carats_'):
-                # Stone weight
-                try:
-                    stone_weight = float(product['Stone_Weight__Carats_'])
-                    option_values.append({"optionName": attr_name, "name": f"{stone_weight:.2f} CTW"})
-                except (ValueError, TypeError):
-                    pass
-            
-            # Stone Size is now a metadata attribute only, not a variant attribute
-            # elif attr_name == 'Stone Size':
-            #     # Stone size for non-ring products
-            #     length = product.get('Primary_Gem_Diameter_Length_MM')
-            #     width = product.get('Primary_Gem_Width_MM')
-            #     if length and width:
-            #         try:
-            #             length_val = float(length)
-            #             width_val = float(width)
-            #             if length_val == width_val:
-            #                 option_values.append({"optionName": attr_name, "name": f"{length_val:.1f}mm"})
-            #             else:
-            #                 option_values.append({"optionName": attr_name, "name": f"{length_val:.1f}x{width_val:.1f}mm"})
-            #         except (ValueError, TypeError):
-            #             pass
+        # Apply attributes in priority order: Carat Weight, Metal Type, Ring Size
+        priority_order = ['Carat Weight', 'Metal Type', 'Size']
+        
+        for attr_name in priority_order:
+            if attr_name in dynamic_attributes:
+                if attr_name == 'Carat Weight' and product.get('Stone_Weight__Carats_'):
+                    # Stone weight (first priority)
+                    try:
+                        stone_weight = float(product['Stone_Weight__Carats_'])
+                        option_values.append({"optionName": attr_name, "name": f"{stone_weight:.2f} CTW"})
+                    except (ValueError, TypeError):
+                        pass
+                
+                elif attr_name == 'Metal Type' and product.get('Metal_Stamp') and product.get('Metal_Color'):
+                    # Metal type (second priority)
+                    metal_type = self.variant_mapper._format_metal_type(
+                        product['Metal_Stamp'], product['Metal_Color'], product.get('Metal_Code')
+                    )
+                    option_values.append({"optionName": attr_name, "name": metal_type})
+                
+                elif attr_name == 'Size' and product.get('Ring_Size'):
+                    # Ring size (last priority)
+                    try:
+                        ring_size = float(product['Ring_Size'])
+                        option_values.append({"optionName": attr_name, "name": f"{ring_size:.1f}"})
+                    except (ValueError, TypeError):
+                        option_values.append({"optionName": attr_name, "name": str(product['Ring_Size'])})
         
         variant['optionValues'] = option_values
         return variant
     
     def _create_product_options(self, dynamic_attributes: Dict[str, List[str]]) -> List[Dict[str, Any]]:
-        """Create product options from dynamic attributes"""
+        """Create product options from dynamic attributes in priority order"""
         product_options = []
         
-        for i, (attr_name, attr_values) in enumerate(dynamic_attributes.items(), 1):
-            # Convert values to objects with just name
-            value_objects = []
-            for value in attr_values:
-                value_objects.append({
-                    'name': value
+        # Define priority order for product options
+        priority_order = ['Carat Weight', 'Metal Type', 'Size']
+        
+        for i, attr_name in enumerate(priority_order, 1):
+            if attr_name in dynamic_attributes:
+                attr_values = dynamic_attributes[attr_name]
+                
+                # Convert values to objects with just name
+                value_objects = []
+                for value in attr_values:
+                    value_objects.append({
+                        'name': value
+                    })
+                
+                product_options.append({
+                    'name': attr_name,
+                    'position': i,
+                    'values': value_objects
                 })
-            
-            product_options.append({
-                'name': attr_name,
-                'position': i,
-                'values': value_objects
-            })
         
         return product_options
     

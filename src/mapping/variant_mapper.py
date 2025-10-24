@@ -183,11 +183,14 @@ class VariantMapper:
                 except (ValueError, TypeError):
                     pass
         
-        # Only include attributes with multiple values
-        if len(metal_types) > 1:
-            attributes['Metal Type'] = sorted(metal_types)
+        # Only include attributes with multiple values, ordered by priority:
+        # 1. Carat Weight (first priority)
+        # 2. Metal Type (second priority) 
+        # 3. Ring Size (last priority)
         if len(stone_weights) > 1:
             attributes['Carat Weight'] = sorted(stone_weights)
+        if len(metal_types) > 1:
+            attributes['Metal Type'] = sorted(metal_types)
         if len(ring_sizes) > 1:
             # Sort ring sizes numerically
             sorted_ring_sizes = sorted([float(size) for size in ring_sizes])
