@@ -34,11 +34,11 @@ class ProductMapper:
             'GEMSTONE': 'Gemstone'
         }
     
-    def map_product(self, product: NavItem, components: List[NavBomComponent]) -> Dict[str, Any]:
+    def map_product(self, product: NavItem, components: List[NavBomComponent], dynamic_attributes: Dict[str, List[str]] = None) -> Dict[str, Any]:
         """Map warranty database product to Shopify product format"""
         
-        # Generate product title
-        title = self._generate_product_title(product, components)
+        # Generate product title (excluding variant attributes)
+        title = self._generate_product_title(product, components, dynamic_attributes)
         
         # Generate handle
         handle = self._generate_handle(title, product.get('Web_Product_Group_ID'))
@@ -55,13 +55,13 @@ class ProductMapper:
             'descriptionHtml': self._generate_description(product, components)
         }
     
-    def _generate_product_title(self, product: NavItem, components: List[NavBomComponent]) -> str:
-        """Generate product title based on specification"""
+    def _generate_product_title(self, product: NavItem, components: List[NavBomComponent], dynamic_attributes: Dict[str, List[str]] = None) -> str:
+        """Generate product title based on specification, excluding variant attributes"""
         title_parts = []
         
-        # Total carat weight
+        # Total carat weight (only include if not a variant attribute)
         stone_weight = product.get('Stone_Weight__Carats_')
-        if stone_weight:
+        if stone_weight and not (dynamic_attributes and 'Carat Weight' in dynamic_attributes):
             try:
                 stone_weight = float(stone_weight)
                 if stone_weight > 0:
@@ -89,8 +89,8 @@ class ProductMapper:
         if product.get('Item_Category_Code'):
             title_parts.append(product['Item_Category_Code'].title())
         
-        # Metal type
-        if product.get('Metal_Stamp') and product.get('Metal_Color'):
+        # Metal type (only include if not a variant attribute)
+        if product.get('Metal_Stamp') and product.get('Metal_Color') and not (dynamic_attributes and 'Metal Type' in dynamic_attributes):
             metal_type = self._format_metal_type(product['Metal_Stamp'], product['Metal_Color'], product.get('Metal_Code'))
             title_parts.append(f"in {metal_type}")
         

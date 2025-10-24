@@ -70,19 +70,8 @@ class VariantMapper:
         else:
             options.append({"optionName": "Size", "name": "7.0"})  # Default fallback
         
-        # Option 2: Metal Type
-        if product.get('Metal_Stamp') and product.get('Metal_Color'):
-            metal_type = self._format_metal_type(product['Metal_Stamp'], product['Metal_Color'], product.get('Metal_Code'))
-            options.append({"optionName": "Metal", "name": metal_type})
-        
-        # Option 3: Stone Weight
-        stone_weight = product.get('Stone_Weight__Carats_')
-        if stone_weight:
-            try:
-                stone_weight = float(stone_weight)
-                options.append({"optionName": "Stone Weight", "name": f"{stone_weight:.2f} CTW"})
-            except (ValueError, TypeError):
-                pass
+        # Note: Metal Type and Carat Weight will be added dynamically if they have multiple values
+        # This will be handled by the dynamic variant logic in the data transformer
         
         return options
     
@@ -146,6 +135,68 @@ class VariantMapper:
         # Shopify limits product options to 3 maximum
         
         return options
+    
+    def get_dynamic_variant_attributes(self, products: List[NavItem]) -> Dict[str, List[str]]:
+        """Determine which attributes should be variant options based on unique values"""
+        attributes = {}
+        
+        # Collect all unique values for each potential attribute
+        metal_types = set()
+        stone_weights = set()
+        ring_sizes = set()
+        stone_sizes = set()
+        
+        for product in products:
+            # Metal Type
+            if product.get('Metal_Stamp') and product.get('Metal_Color'):
+                metal_type = self._format_metal_type(product['Metal_Stamp'], product['Metal_Color'], product.get('Metal_Code'))
+                metal_types.add(metal_type)
+            
+            # Stone Weight
+            stone_weight = product.get('Stone_Weight__Carats_')
+            if stone_weight:
+                try:
+                    stone_weight = float(stone_weight)
+                    stone_weights.add(f"{stone_weight:.2f} CTW")
+                except (ValueError, TypeError):
+                    pass
+            
+            # Ring Size
+            if product.get('Ring_Size'):
+                try:
+                    ring_size = float(product['Ring_Size'])
+                    ring_sizes.add(f"{ring_size:.1f}")
+                except (ValueError, TypeError):
+                    ring_sizes.add(str(product['Ring_Size']))
+            
+            # Stone Size (for non-ring products)
+            length = product.get('Primary_Gem_Diameter_Length_MM')
+            width = product.get('Primary_Gem_Width_MM')
+            if length and width:
+                try:
+                    length_val = float(length)
+                    width_val = float(width)
+                    if length_val == width_val:
+                        stone_sizes.add(f"{length_val:.1f}mm")
+                    else:
+                        stone_sizes.add(f"{length_val:.1f}x{width_val:.1f}mm")
+                except (ValueError, TypeError):
+                    pass
+        
+        # Only include attributes with multiple values
+        if len(metal_types) > 1:
+            attributes['Metal Type'] = sorted(metal_types)
+        if len(stone_weights) > 1:
+            attributes['Carat Weight'] = sorted(stone_weights)
+        if len(ring_sizes) > 1:
+            # Sort ring sizes numerically
+            sorted_ring_sizes = sorted([float(size) for size in ring_sizes])
+            attributes['Size'] = [f"{size:.1f}" for size in sorted_ring_sizes]
+        # Stone Size is now a metadata attribute only, not a variant attribute
+        # if len(stone_sizes) > 1:
+        #     attributes['Stone Size'] = sorted(stone_sizes)
+        
+        return attributes
     
     def _get_bracelet_options(self, product: NavItem, components: List[NavBomComponent]) -> List[Dict[str, str]]:
         """Get bracelet-specific option values"""

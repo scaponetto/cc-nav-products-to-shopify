@@ -1427,6 +1427,46 @@ Variants: 11 unique combinations
 - ... (continues for all 11 sizes)
 ```
 
+## 🔧 **Advanced Variant Logic Implementation**
+
+### **Dynamic Variant Attributes**
+The system now implements intelligent variant attribute detection that only includes attributes with multiple values:
+
+#### **Ring Products (LGD-101792)**
+- **Variant Attributes**: Only "Size" (since Metal Type and Carat Weight are identical across all variants)
+- **Product Title**: "0.30 CTW Round Lab-Grown Diamond Accented Ring in 14K Yellow Gold"
+- **Handle**: "030-ctw-round-lab-grown-diamond-accented-ring-in-14k-yellow-gold-lgd-101792"
+- **Size Options**: 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0 (sorted numerically)
+
+#### **Necklace Products (GID-100288)**
+- **Variant Attributes**: "Metal Type" and "Carat Weight" (Stone Size moved to metadata)
+- **Product Title**: "Round Moissanite Solitaire Necklace" (excludes variant attributes)
+- **Handle**: "round-moissanite-solitaire-necklace-gid-100288"
+- **Metal Options**: 14K Rose Gold, 14K White Gold, 14K Yellow Gold, Platinum
+- **Carat Weight Options**: 0.50 CTW, 1.00 CTW, 1.50 CTW, 1.90 CTW, 3.10 CTW, 3.27 CTW
+
+#### **Earring Products (LGD-100040)**
+- **Variant Attributes**: "Metal Type" and "Carat Weight"
+- **Product Title**: "Round Lab-Grown Diamond Martini Earring" (excludes variant attributes)
+- **Handle**: "round-lab-grown-diamond-martini-earring-lgd-100040"
+- **Metal Options**: 14K Rose Gold, 14K White Gold, 14K Yellow Gold, 18K Rose Gold, 18K White Gold, 18K Yellow Gold, Platinum
+- **Carat Weight Options**: 0.50 CTW, 1.00 CTW, 1.50 CTW, 2.00 CTW, 3.00 CTW, 4.00 CTW
+
+### **Attribute Naming Conventions**
+- **Metal Type**: Renamed from "Metal" to "Metal Type" for clarity
+- **Carat Weight**: Renamed from "Stone Weight" to "Carat Weight" for industry standard
+- **Stone Size**: Moved from variant attribute to metadata field for product details
+
+### **Product Title Optimization**
+- **Exclusion Logic**: Variant attributes are automatically excluded from product titles
+- **Clean Titles**: Product titles focus on core product characteristics
+- **Handle Generation**: Handles are generated from clean titles without variant attributes
+
+### **Metadata Integration**
+- **Stone Size**: Now stored as metadata (`custom.product_attributes.stone_size`)
+- **Product Details**: Comprehensive metafields for product specifications
+- **Variant Details**: Individual variant metafields for specific attributes
+
 ---
 
 This specification provides a comprehensive blueprint for implementing the product export system. The modular architecture ensures maintainability, while the atomic operations approach prevents the product locking issues encountered in previous implementations. The system is designed to be efficient, scalable, and robust, with comprehensive error handling and monitoring capabilities.

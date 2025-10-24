@@ -56,6 +56,26 @@ class MetadataMapper:
                 'value': product['Primary_Gem_Shape']
             })
         
+        # Stone size (moved from variant attributes)
+        length = product.get('Primary_Gem_Diameter_Length_MM')
+        width = product.get('Primary_Gem_Width_MM')
+        if length and width:
+            try:
+                length_val = float(length)
+                width_val = float(width)
+                if length_val == width_val:
+                    stone_size = f"{length_val:.1f}mm"
+                else:
+                    stone_size = f"{length_val:.1f}x{width_val:.1f}mm"
+                metafields.append({
+                    'namespace': 'custom.product_attributes',
+                    'key': 'stone_size',
+                    'type': 'single_line_text_field',
+                    'value': stone_size
+                })
+            except (ValueError, TypeError):
+                pass
+        
         # Stone color
         if product.get('Primary_Gem_Color'):
             metafields.append({
