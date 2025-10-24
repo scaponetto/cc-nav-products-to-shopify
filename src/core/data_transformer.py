@@ -64,6 +64,9 @@ class DataTransformer:
             else:
                 self.logger.warning(f"Skipping duplicate variant for product {product['No_']}: {combination_key}")
         
+        # Sort variants and add position fields for proper ordering
+        shopify_product['variants'] = self._sort_variants_and_add_positions(shopify_product['variants'], dynamic_attributes)
+        
         # Add product options based on dynamic attributes
         shopify_product['productOptions'] = self._create_product_options(dynamic_attributes)
         
@@ -134,6 +137,89 @@ class DataTransformer:
                 })
         
         return product_options
+    
+    def _sort_variants_and_add_positions(self, variants: List[Dict[str, Any]], dynamic_attributes: Dict[str, List[str]]) -> List[Dict[str, Any]]:
+        """Sort variants in logical order and add position fields"""
+        if not variants:
+            return variants
+        
+        # Define priority order for sorting
+        priority_order = ['Carat Weight', 'Metal Type', 'Size']
+        
+        def get_variant_sort_key(variant: Dict[str, Any]) -> tuple:
+            """Generate sort key for variant based on option values"""
+            option_values = variant.get('optionValues', [])
+            sort_key = []
+            
+            # Create sort key based on priority order
+            for attr_name in priority_order:
+                if attr_name in dynamic_attributes:
+                    # Find the option value for this attribute
+                    attr_value = None
+                    for opt in option_values:
+                        if opt['optionName'] == attr_name:
+                            attr_value = opt['name']
+                            break
+                    
+                    if attr_value:
+                        if attr_name == 'Carat Weight':
+                            # Sort by numeric carat value
+                            try:
+                                numeric_value = float(attr_value.replace(' CTW', ''))
+                                sort_key.append((0, numeric_value))  # 0 for numeric sorting
+                            except (ValueError, TypeError):
+                                sort_key.append((1, attr_value))  # 1 for string sorting
+                        elif attr_name == 'Metal Type':
+                            # Sort by custom metal type priority
+                            sort_key.append(self._get_metal_type_sort_key(attr_value))
+                        elif attr_name == 'Size':
+                            # Sort by numeric size value
+                            try:
+                                numeric_value = float(attr_value)
+                                sort_key.append((0, numeric_value))  # 0 for numeric sorting
+                            except (ValueError, TypeError):
+                                sort_key.append((1, attr_value))  # 1 for string sorting
+                    else:
+                        sort_key.append((2, ''))  # 2 for missing values (go last)
+            
+            return tuple(sort_key)
+        
+        # Sort variants
+        sorted_variants = sorted(variants, key=get_variant_sort_key)
+        
+        # Add position fields
+        for i, variant in enumerate(sorted_variants, 1):
+            variant['position'] = i
+        
+        return sorted_variants
+    
+    def _get_metal_type_sort_key(self, metal_type: str) -> tuple:
+        """Generate sort key for metal type based on custom priority"""
+        metal_type_lower = metal_type.lower()
+        
+        # Extract metal and color
+        if '14k' in metal_type_lower:
+            metal_key = 1
+        elif 'silver' in metal_type_lower:
+            metal_key = 2
+        elif 'platinum' in metal_type_lower or 'pt' in metal_type_lower:
+            metal_key = 3
+        elif '18k' in metal_type_lower:
+            metal_key = 4
+        else:
+            metal_key = 5  # Unknown metals go last
+        
+        # Extract color
+        if 'white' in metal_type_lower:
+            color_key = 1
+        elif 'yellow' in metal_type_lower:
+            color_key = 2
+        elif 'rose' in metal_type_lower:
+            color_key = 3
+        else:
+            color_key = 4  # Other colors go last
+        
+        return (metal_key, color_key, metal_type)
     
     def validate_shopify_data(self, shopify_data: Dict[str, Any]) -> List[str]:
         """Validate transformed Shopify data"""
