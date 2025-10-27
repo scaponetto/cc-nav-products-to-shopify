@@ -76,6 +76,14 @@ class GroupIDProcessor:
         # 4. Create/update product in Shopify
         shopify_result = self.shopify_manager.create_or_update_product(shopify_data)
         
+        # Check for errors
+        if shopify_result.get('userErrors'):
+            error_msg = '; '.join([f"{err.get('field')}: {err.get('message')}" for err in shopify_result['userErrors']])
+            raise ValueError(f"Shopify API errors: {error_msg}")
+        
+        if not shopify_result.get('product'):
+            raise ValueError("Product creation failed: No product data returned")
+        
         return ProcessingResult(
             group_id=group_id,
             success=True,

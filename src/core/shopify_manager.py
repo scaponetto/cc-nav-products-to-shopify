@@ -39,9 +39,16 @@ class ShopifyManager:
             mutation
         )
         
-        # If product was created successfully, publish to Online Store and associate images
+        # If product was created successfully, upload images, publish, and associate
         if result.get('product') and not result.get('userErrors'):
             product_id = result['product']['id']
+            
+            # Upload images if present
+            if 'media' in product_data and product_data['media']:
+                self.logger.info(f"Uploading {len(product_data['media'])} images to product")
+                upload_result = self._upload_product_images(product_id, product_data['media'])
+                if not upload_result:
+                    self.logger.warning("Some images failed to upload")
             
             # Publish to Online Store
             publish_result = self._publish_to_online_store(product_id)
@@ -143,10 +150,21 @@ class ShopifyManager:
                     'values': value_objects
                 })
         
-        # Add product options to the input
+        # Add product options to the input and clean internal fields
         product_data_with_options = product_data.copy()
         if product_options:
             product_data_with_options['productOptions'] = product_options
+        
+        # Remove internal fields that shouldn't be sent to Shopify
+        # 'media' will be uploaded separately after product creation
+        fields_to_remove = ['_image_sku_mapping', '_image_data_map', 'media']
+        for field in fields_to_remove:
+            product_data_with_options.pop(field, None)
+        
+        # Remove internal fields from variants
+        if 'variants' in product_data_with_options:
+            for variant in product_data_with_options['variants']:
+                variant.pop('_image_sku', None)
         
         variables = {
             "input": product_data_with_options,
@@ -231,3 +249,65 @@ class ShopifyManager:
         except Exception as e:
             self.logger.error(f"Failed to publish product to Online Store: {e}")
             return {"userErrors": [{"field": "publish", "message": str(e)}]}
+    
+    def _upload_product_images(self, product_id: str, media: list) -> bool:
+        """Upload images to product using productCreateMedia mutation"""
+        mutation = """
+        mutation productCreateMedia($productId: ID!, $media: [CreateMediaInput!]!) {
+            productCreateMedia(productId: $productId, media: $media) {
+                media {
+                    ... on MediaImage {
+                        id
+                        alt
+                        image {
+                            url
+                        }
+                    }
+                }
+                mediaUserErrors {
+                    field
+                    message
+                }
+            }
+        }
+        """
+        
+        variables = {
+            "productId": product_id,
+            "media": media
+        }
+        
+        try:
+            response = requests.post(
+                self.base_url,
+                headers=self.headers,
+                json={
+                    "query": mutation,
+                    "variables": variables
+                },
+                timeout=self.config.shopify.timeout
+            )
+            
+            if response.status_code == 429:
+                retry_after = int(response.headers.get('Retry-After', 2))
+                raise RateLimitError(f"Rate limited. Retry after {retry_after} seconds", retry_after)
+            
+            response.raise_for_status()
+            result = response.json()
+            
+            if result.get('errors'):
+                self.logger.error(f"GraphQL errors uploading images: {result['errors']}")
+                return False
+            
+            media_errors = result.get('data', {}).get('productCreateMedia', {}).get('mediaUserErrors', [])
+            if media_errors:
+                self.logger.error(f"Media upload errors: {media_errors}")
+                return False
+            
+            media_created = result.get('data', {}).get('productCreateMedia', {}).get('media', [])
+            self.logger.info(f"Successfully uploaded {len(media_created)} images to product {product_id}")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Failed to upload images to product: {e}")
+            return False
