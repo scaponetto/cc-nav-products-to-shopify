@@ -27,8 +27,20 @@ logging:
   max_size: "${LOG_MAX_SIZE:10MB}"
   backup_count: "${LOG_BACKUP_COUNT:5}"
 
-# Image Processing (Placeholder)
+# AWS S3 Configuration for Image Processing
+aws:
+  access_key_id: "${AWS_ACCESS_KEY_ID}"
+  secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
+  session_token: "${AWS_SESSION_TOKEN}"
+  region: "${AWS_REGION:us-east-1}"
+  bucket: "${AWS_S3_BUCKET:production-charlesandcolvard-moissanite2-media-import}"
+
+# Image Processing Configuration
 images:
-  enabled: false
-  source_path: "${IMAGE_SOURCE_PATH:/images}"
-  upload_method: "staged_upload"
+  enabled: "${IMAGES_ENABLED:true}"
+  base_directory: "${IMAGE_BASE_DIR:sorted-media}"
+  min_width: "${IMAGE_MIN_WIDTH:250}"
+  min_height: "${IMAGE_MIN_HEIGHT:250}"
+  accepted_extensions: [".jpg", ".jpeg", ".png", ".gif", ".webp"]
+  variation_suffix: "${IMAGE_VARIATION_SUFFIX:a}"
+  max_workers: "${IMAGE_MAX_WORKERS:10}"

@@ -118,8 +118,12 @@ Invalid Examples (to be ignored):
 - **Reject**: All non-image files (`.txt`, `.pdf`, `.zip`, etc.)
 
 ### **2. Size Filtering**
-- **Minimum Size**: 200x200 pixels
-- **Action**: Download image metadata, check dimensions, skip if < 200x200
+- **Minimum Size**: Images must be **greater than** 250x250 pixels
+- **Action**: Download image metadata, check dimensions, skip if ≤ 250x250
+- **Examples**: 
+  - 250x250 = **excluded**
+  - 251x251 = **included**
+  - 300x400 = **included**
 
 ### **3. Naming Pattern Filtering**
 - **Required Pattern**: `[Image_SKU]-[Number]a-[Random].[ext]`

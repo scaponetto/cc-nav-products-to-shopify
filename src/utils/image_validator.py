@@ -62,19 +62,21 @@ class ImageValidator:
     def validate_dimensions(self, width: Optional[int], height: Optional[int]) -> bool:
         """
         Check if image meets minimum size requirements.
+        Images must be GREATER than the minimum dimensions (not equal to).
         
         Args:
             width: Image width in pixels
             height: Image height in pixels
         
         Returns:
-            True if dimensions meet minimum requirements
+            True if dimensions are strictly greater than minimum requirements
         """
         if width is None or height is None:
             self.logger.warning(f"Missing dimension information: width={width}, height={height}")
             return False
         
-        return width >= self.min_width and height >= self.min_height
+        # Images must be GREATER than minimum (250x250 excluded, 251x251 included)
+        return width > self.min_width and height > self.min_height
     
     def is_valid_image_type(self, filename: str) -> bool:
         """
@@ -135,7 +137,7 @@ class ImageValidator:
         # Check dimensions if provided
         if width is not None and height is not None:
             if not self.validate_dimensions(width, height):
-                errors.append(f"Image too small: {width}x{height} (minimum: {self.min_width}x{self.min_height})")
+                errors.append(f"Image too small: {width}x{height} (must be greater than {self.min_width}x{self.min_height})")
         
         return errors
 
