@@ -7,6 +7,7 @@ from typing import Dict, Any, Optional
 import requests
 from src.utils.rate_limiter import RateLimiter
 from src.utils.error_handler import ErrorHandler, RateLimitError
+from src.core.image_uploader import ImageUploader
 
 class ShopifyManager:
     """Manages Shopify API interactions"""
@@ -21,6 +22,9 @@ class ShopifyManager:
             'Content-Type': 'application/json',
             'X-Shopify-Access-Token': config.shopify.access_token
         }
+        
+        # Initialize image uploader
+        self.image_uploader = ImageUploader(self, logger)
     
     def create_or_update_product(self, product_data: Dict[str, Any]) -> Dict[str, Any]:
         """Create or update a product in Shopify using atomic operations"""
@@ -35,14 +39,37 @@ class ShopifyManager:
             mutation
         )
         
-        # If product was created successfully, publish to Online Store
+        # If product was created successfully, publish to Online Store and associate images
         if result.get('product') and not result.get('userErrors'):
             product_id = result['product']['id']
+            
+            # Publish to Online Store
             publish_result = self._publish_to_online_store(product_id)
             if publish_result.get('userErrors'):
                 self.logger.warning(f"Failed to publish product to Online Store: {publish_result['userErrors']}")
             else:
                 self.logger.info(f"Successfully published product {product_id} to Online Store")
+            
+            # Associate images to variants if image data is present
+            if '_image_sku_mapping' in product_data and '_image_data_map' in product_data:
+                self.logger.info("Associating images to variants")
+                
+                # Build mapping of variant SKU to Image_SKU
+                variant_to_image_sku = {}
+                for image_sku, product_skus in product_data['_image_sku_mapping'].items():
+                    for product_sku in product_skus:
+                        variant_to_image_sku[product_sku] = image_sku
+                
+                # Get variants from result
+                variants = result['product'].get('variants', {}).get('nodes', [])
+                
+                # Associate images
+                self.image_uploader.associate_images_to_variants(
+                    product_id,
+                    variants,
+                    variant_to_image_sku,
+                    product_data['_image_data_map']
+                )
         
         return result
     

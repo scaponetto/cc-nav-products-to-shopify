@@ -8,6 +8,7 @@ from src.mapping.product_mapper import ProductMapper
 from src.mapping.variant_mapper import VariantMapper
 from src.mapping.metadata_mapper import MetadataMapper
 from src.models.database_models import NavItem
+from src.core.image_handler import ImageHandler
 
 class DataTransformer:
     """Transforms warranty database data to Shopify-compatible format"""
@@ -18,6 +19,12 @@ class DataTransformer:
         self.product_mapper = ProductMapper(config, logger)
         self.variant_mapper = VariantMapper(config, logger)
         self.metadata_mapper = MetadataMapper(config, logger)
+        
+        # Initialize image handler if images are enabled
+        if config.images.enabled:
+            self.image_handler = ImageHandler(config, logger)
+        else:
+            self.image_handler = None
     
     def transform_group_data(self, group_data: Dict[str, Any]) -> Dict[str, Any]:
         """Transform group data to Shopify product format"""
@@ -74,6 +81,35 @@ class DataTransformer:
         shopify_product['metafields'] = self.metadata_mapper.map_metafields(
             products[0], components_by_product.get(products[0]['No_'], [])
         )
+        
+        # Process images if enabled
+        if self.image_handler:
+            self.logger.info("Processing images for product group")
+            
+            # Collect Image_SKUs
+            image_sku_mapping = self.image_handler.collect_image_skus(products)
+            
+            # Fetch images from S3
+            image_data_map = self.image_handler.fetch_images_for_group(image_sku_mapping, group_id)
+            
+            # Add Image_SKU to each variant for later association
+            for variant in shopify_product['variants']:
+                variant_sku = variant.get('sku')
+                if variant_sku:
+                    # Find the Image_SKU for this variant
+                    for image_sku, product_skus in image_sku_mapping.items():
+                        if variant_sku in product_skus:
+                            variant['_image_sku'] = image_sku
+                            break
+            
+            # Prepare media for Shopify upload
+            shopify_product['media'] = self.image_handler.process_product_images(
+                shopify_product, image_data_map
+            )
+            
+            # Store image data for variant association later
+            shopify_product['_image_sku_mapping'] = image_sku_mapping
+            shopify_product['_image_data_map'] = image_data_map
         
         return shopify_product
     

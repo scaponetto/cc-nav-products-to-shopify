@@ -36,6 +36,24 @@ class LoggingConfig:
     max_size: str
     backup_count: int
 
+@dataclass
+class AWSConfig:
+    access_key_id: str
+    secret_access_key: str
+    session_token: str
+    region: str
+    bucket: str
+
+@dataclass
+class ImagesConfig:
+    enabled: bool
+    base_directory: str
+    min_width: int
+    min_height: int
+    accepted_extensions: list
+    variation_suffix: str
+    max_workers: int
+
 class ConfigManager:
     """Manages configuration from files and environment variables"""
     
@@ -56,6 +74,24 @@ class ConfigManager:
         self.shopify = ShopifyConfig(**config_data['shopify'])
         self.processing = ProcessingConfig(**config_data['processing'])
         self.logging = LoggingConfig(**config_data['logging'])
+        
+        # Load AWS and Images configuration if present
+        if 'aws' in config_data:
+            self.aws = AWSConfig(**config_data['aws'])
+        
+        if 'images' in config_data:
+            self.images = ImagesConfig(**config_data['images'])
+        else:
+            # Default images config (disabled)
+            self.images = ImagesConfig(
+                enabled=False,
+                base_directory='sorted-media',
+                min_width=200,
+                min_height=200,
+                accepted_extensions=['.jpg', '.jpeg', '.png', '.gif', '.webp'],
+                variation_suffix='a',
+                max_workers=10
+            )
     
     def _substitute_env_vars(self, data: Any) -> Any:
         """Recursively substitute environment variables in configuration"""
